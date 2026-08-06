@@ -226,7 +226,7 @@ async function cargarRecursos(id){
 }
 function crumb(){let h='<a onclick="goHome()">'+tt('inicio')+'</a>';if(state.spec){const e=specById(state.spec);h+='<span class="sep">/</span><a onclick="goSpec(\''+e.id+'\')">'+(lang==='es'?e.nombre_es:e.nombre_en)+'</a>';}if(state.spec&&state.folder){h+='<span class="sep">/</span><span class="here">'+(state.folder==='videos'?tt('videos'):tt('fotos'))+'</span>';}return '<div class="crumb">'+h+'</div>';}
 function viewHome(){
- let cards=DATA.map(e=>{const nombre=lang==='es'?e.nombre_es:e.nombre_en,desc=lang==='es'?e.desc_es:e.desc_en;const has=e.fotos.length||e.videos.length;const bg=e.portada?"background-image:url('"+e.portada+"')":"background:"+e.color;const shade="background:linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,.15) 60%, rgba(0,0,0,.35));";return '<div class="scard '+(has?'':'soon')+'" '+(has?'onclick="goSpec(\''+e.id+'\')"':'')+'><div class="bg" style="'+bg+'"></div><div class="shade" style="'+shade+'"></div>'+(has?'':'<div class="tag">'+tt('soon')+'</div>')+'<div class="body"><h3>'+nombre+'</h3><p>'+desc+'</p></div></div>';}).join('');
+ let cards=DATA.map(e=>{const nombre=lang==='es'?e.nombre_es:e.nombre_en,desc=lang==='es'?e.desc_es:e.desc_en;const has=true;const bg=e.portada?"background-image:url('"+e.portada+"')":"background:"+e.color;const shade="background:linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,.15) 60%, rgba(0,0,0,.35));";return '<div class="scard '+(has?'':'soon')+'" '+(has?'onclick="goSpec(\''+e.id+'\')"':'')+'><div class="bg" style="'+bg+'"></div><div class="shade" style="'+shade+'"></div>'+(has?'':'<div class="tag">'+tt('soon')+'</div>')+'<div class="body"><h3>'+nombre+'</h3><p>'+desc+'</p></div></div>';}).join('');
  return '<section class="hero"><div class="eyebrow">'+tt('eyebrow')+'</div><h1>'+tt('intro_h')+'</h1><p>'+tt('intro_p')+'</p></section><section class="specs">'+cards+'</section>';
 }
 function folderIcon(c){return '<svg viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="1.8"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>';}
@@ -273,6 +273,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeLB(null,true);
 setLang("es");
 maybeShowSofia();
 if(state.spec){cargarRecursos(state.spec).then(()=>render());}
+DATA.forEach(e=>{cargarRecursos(e.id).then(()=>{if(!state.spec)render();});});
 </script>
 </body>
 </html>
