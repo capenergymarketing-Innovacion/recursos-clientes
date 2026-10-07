@@ -1,3 +1,39 @@
+// ---------------------------------------------------------------
+// ACCESO CON CÓDIGO (oct 2026)
+// Toda la web exige un código temporal generado desde /generador.
+// Los códigos viven en Netlify Blobs (almacén "codigos-acceso").
+// Sin código válido esta función NO devuelve ningún archivo.
+// ---------------------------------------------------------------
+const { getStore, connectLambda } = require("@netlify/blobs");
+
+function normalizarCodigo(c) {
+  const limpio = String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (limpio.length !== 8) return "";
+  return limpio.slice(0, 4) + "-" + limpio.slice(4);
+}
+
+async function comprobarCodigo(event) {
+  const h = event.headers || {};
+  const codigo = normalizarCodigo(h["x-codigo-acceso"] || h["X-Codigo-Acceso"]);
+  if (!codigo) return { ok: false, motivo: "sin_codigo" };
+  connectLambda(event);
+  const store = getStore("codigos-acceso");
+  const datos = await store.get(codigo, { type: "json" });
+  if (!datos) return { ok: false, motivo: "no_valido" };
+  if (Date.now() > datos.expira) return { ok: false, motivo: "caducado" };
+  return { ok: true, codigo, expira: datos.expira, descarga: !!datos.descarga };
+}
+
+// Sin permiso de descarga se quitan los enlaces a Drive (Abrir y Descargar).
+function sinDescarga(lista) {
+  return (lista || []).map((x) => {
+    const { dl, open, ...resto } = x;
+    return resto;
+  });
+}
+
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
 const CARPETAS = {
   msk: {
     fotos: "1JT5IhLzdbKsiy3pBKqjQOJNEladZ-pHr",
@@ -120,20 +156,43 @@ function clasificar(nombre) {
 
 exports.handler = async (event) => {
   const apiKey = process.env.GOOGLE_API_KEY;
-  const especialidad = (event.queryStringParameters || {}).especialidad;
+  const qs = event.queryStringParameters || {};
+  const especialidad = qs.especialidad;
 
+  // Respuesta privada: nunca se guarda en caché compartida
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Cache-Control": "public, max-age=300",
+    "Cache-Control": "private, no-store",
   };
+
+  // 1) Puerta: comprobar el código antes de nada
+  let acceso;
+  try {
+    acceso = await comprobarCodigo(event);
+  } catch (e) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: "No se pudo comprobar el código" }) };
+  }
+  if (!acceso.ok) {
+    if (acceso.motivo !== "sin_codigo") await esperar(600); // frena a quien prueba códigos al azar
+    return { statusCode: 401, headers, body: JSON.stringify({ error: "acceso", motivo: acceso.motivo }) };
+  }
+  if (qs.accion === "verificar") {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ ok: true, expira: acceso.expira, descarga: acceso.descarga }),
+    };
+  }
 
   if (!apiKey) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: "Falta la API key" }) };
   }
   if (especialidad === "eventos") {
     try {
-      const eventos = await leerEventos(apiKey);
+      let eventos = await leerEventos(apiKey);
+      if (!acceso.descarga) {
+        eventos = eventos.map((ev) => ({ ...ev, fotos: sinDescarga(ev.fotos), videos: sinDescarga(ev.videos) }));
+      }
       return {
         statusCode: 200,
         headers,
@@ -178,7 +237,16 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ especialidad, fotos, videos, testimonios }),
+      body: JSON.stringify(
+        acceso.descarga
+          ? { especialidad, fotos, videos, testimonios }
+          : {
+              especialidad,
+              fotos: sinDescarga(fotos),
+              videos: sinDescarga(videos),
+              testimonios: sinDescarga(testimonios),
+            }
+      ),
     };
   } catch (e) {
     return {

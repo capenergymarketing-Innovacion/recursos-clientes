@@ -1,0 +1,8 @@
+{
+  "name": "recursos-clientes",
+  "private": true,
+  "description": "Recursos Capenergy para clientes, con acceso por código temporal",
+  "dependencies": {
+    "@netlify/blobs": "^8.2.0"
+  }
+}

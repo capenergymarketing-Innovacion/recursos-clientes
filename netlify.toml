@@ -2,7 +2,21 @@
   publish = "."
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/api/recursos"
   to = "/.netlify/functions/recursos"
   status = 200
+
+[[redirects]]
+  from = "/api/codigos"
+  to = "/.netlify/functions/codigos"
+  status = 200
+
+[[headers]]
+  for = "/generador*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
