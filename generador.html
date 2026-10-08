@@ -279,8 +279,8 @@ async function listar(){
   const d=await llamar({accion:"listar",token:TOKEN}).catch(()=>null);
   if(!d||!d.ok){if(d&&d.motivo!=="sesion")$("tabla").innerHTML='<div class="nadie">No se ha podido cargar la lista.</div>';return;}
   if(!d.activos.length){$("tabla").innerHTML='<div class="nadie">No hay códigos activos ahora mismo.</div>';return;}
-  $("tabla").innerHTML='<table><thead><tr><th>Para</th><th>Código</th><th>Caduca</th><th>Descarga</th><th></th></tr></thead><tbody>'+
-    d.activos.map(a=>'<tr><td>'+(a.tipo==="equipo"?'<span class="tag equipo">Equipo</span> ':'')+esc(a.nota)+'</td><td class="c">'+a.codigo+'</td><td>'+fecha(a.expira)+'</td><td><span class="tag '+(a.descarga?'si':'no')+'">'+(a.descarga?'Sí':'No')+'</span></td><td><button class="rev" type="button" data-rev="'+a.codigo+'">Revocar</button></td></tr>').join('')+'</tbody></table>';
+  $("tabla").innerHTML='<table><thead><tr><th>Para</th><th>Creado por</th><th>Código</th><th>Caduca</th><th>Descarga</th><th></th></tr></thead><tbody>'+
+    d.activos.map(a=>'<tr><td>'+(a.tipo==="equipo"?'<span class="tag equipo">Equipo</span> ':'')+esc(a.nota)+'</td><td>'+esc(a.creadoPorNombre||a.creadoPor||'')+'</td><td class="c">'+a.codigo+'</td><td>'+fecha(a.expira)+'</td><td><span class="tag '+(a.descarga?'si':'no')+'">'+(a.descarga?'Sí':'No')+'</span></td><td><button class="rev" type="button" data-rev="'+a.codigo+'">Revocar</button></td></tr>').join('')+'</tbody></table>';
   $("tabla").querySelectorAll("[data-rev]").forEach(b=>b.addEventListener("click",async()=>{
     const c=b.dataset.rev;if(!confirm("¿Revocar el código "+c+"? La web se le cerrará sola en menos de un minuto."))return;
     b.disabled=true;const r=await llamar({accion:"revocar",token:TOKEN,codigo:c});

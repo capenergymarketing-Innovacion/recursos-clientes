@@ -160,6 +160,34 @@
   .eq-f input:focus{outline:3px solid #CFE2F0;border-color:var(--accent);background:#fff}
   .eq-e{display:none;color:#C0392B;font-size:.8rem;font-weight:600;margin-top:4px}
   .eq-f.err input{border-color:#C0392B;background:#FDF3F2}.eq-f.err .eq-e{display:block}
+  .share-btn{position:fixed;left:16px;bottom:58px;z-index:46;display:none;align-items:center;gap:8px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:.88rem;padding:11px 18px;cursor:pointer;box-shadow:0 8px 24px rgba(20,32,43,.22)}
+  .share-btn:focus-visible{outline:3px solid #9CC4E0;outline-offset:2px}
+  body.dentro.equipo .share-btn{display:inline-flex}
+  .share-ov{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(20,32,43,.5)}
+  .share-ov.on{display:flex}
+  .share-card{background:var(--white);width:100%;max-width:470px;max-height:92vh;overflow:auto;border-radius:18px;box-shadow:0 30px 80px rgba(10,20,30,.35);padding:26px 24px}
+  .share-card h3{font-family:var(--font-d);font-size:1.35rem;margin-bottom:4px}
+  .share-card .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+  .sh-f{margin-bottom:14px}
+  .sh-f label{display:block;font-weight:700;font-size:.86rem;margin-bottom:5px}
+  .sh-f input[type=text],.sh-f select{width:100%;border:1px solid #CFD9E0;border-radius:10px;padding:11px 12px;font:inherit;background:#F6F9FB;color:var(--ink)}
+  .sh-f input:focus,.sh-f select:focus{outline:3px solid #CFE2F0;border-color:var(--accent);background:#fff}
+  .sh-f .e{display:none;color:#C0392B;font-size:.8rem;font-weight:600;margin-top:4px}
+  .sh-f.err input,.sh-f.err select{border-color:#C0392B;background:#FDF3F2}.sh-f.err .e{display:block}
+  .sh-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .sh-chk{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:.84rem;color:var(--muted);cursor:pointer;margin-bottom:14px}
+  .sh-chk input{width:18px;height:18px;margin-top:1px;accent-color:var(--accent);flex:0 0 auto}
+  .sh-chk b{color:var(--ink);display:block}
+  .sh-acts{display:flex;gap:8px}
+  .sh-acts button{flex:1;border-radius:12px;font:inherit;font-weight:700;padding:12px;cursor:pointer}
+  .sh-go{border:0;background:var(--accent);color:#fff}.sh-go:disabled{opacity:.6;cursor:wait}
+  .sh-no{border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .sh-msg{min-height:1.2em;color:#C0392B;font-size:.85rem;font-weight:600;margin:4px 0 10px}
+  .sh-res{display:none;text-align:center}.sh-res.on{display:block}
+  .sh-cod{font:700 2.1rem/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.14em;border:2px dashed var(--accent);background:#EAF2F8;border-radius:14px;padding:14px;margin:12px 0 8px}
+  .sh-meta{color:var(--muted);font-size:.84rem;margin-bottom:12px}
+  .sh-res textarea{width:100%;min-height:110px;border:1px solid #CFD9E0;border-radius:10px;padding:10px;font:inherit;font-size:.84rem;margin:10px 0;resize:vertical}
+  @media (max-width:480px){.sh-row{grid-template-columns:1fr}}
   .acceso-pill{position:fixed;left:16px;bottom:16px;z-index:45;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.78rem;color:var(--muted);box-shadow:var(--shadow);display:none}
   .acceso-pill b{color:var(--ink)}
   body.dentro .acceso-pill{display:block}
@@ -189,6 +217,31 @@
   </div>
 </div>
 <div class="acceso-pill" id="acceso-pill"></div>
+<button type="button" class="share-btn" id="share-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span id="share-btn-t">Compartir con un cliente</span></button>
+<div class="share-ov" id="share-ov" role="dialog" aria-modal="true" aria-labelledby="sh-t">
+  <div class="share-card">
+    <div id="sh-form">
+      <h3 id="sh-t">Compartir con un cliente</h3>
+      <p class="sub">Genera un código temporal para que tu cliente vea este material. Marketing verá quién lo ha creado y puede retirarlo en cualquier momento.</p>
+      <div class="sh-f" id="shf-n"><label for="sh-n">¿Para quién es?</label><input type="text" id="sh-n" maxlength="80" placeholder="Nombre de la persona o clínica"><div class="e">Escribe para quién es (mínimo 3 caracteres).</div></div>
+      <div class="sh-row">
+        <div class="sh-f" id="shf-h"><label for="sh-h">Duración</label><select id="sh-h"><option value="">Elige</option><option value="2">2 horas</option><option value="24">24 horas</option><option value="48">48 horas</option><option value="72">72 horas</option></select><div class="e">Elige cuánto tiempo.</div></div>
+        <div class="sh-f" id="shf-l"><label for="sh-l">Qué compartes</label><select id="sh-l"></select><div class="e">Elige qué compartir.</div></div>
+      </div>
+      <label class="sh-chk" for="sh-d"><input type="checkbox" id="sh-d"><div><b>Permitir descarga</b>Solo para clientes con equipo. Sin marcar, solo podrá ver y reproducir.</div></label>
+      <div class="sh-msg" id="sh-msg" role="alert"></div>
+      <div class="sh-acts"><button type="button" class="sh-no" id="sh-cancel">Cancelar</button><button type="button" class="sh-go" id="sh-go">Generar código</button></div>
+    </div>
+    <div class="sh-res" id="sh-res">
+      <h3>Código listo</h3>
+      <div class="sh-cod" id="sh-cod"></div>
+      <div class="sh-meta" id="sh-meta"></div>
+      <textarea id="sh-txt" readonly aria-label="Mensaje para el cliente"></textarea>
+      <div class="sh-acts"><button type="button" class="sh-no" id="sh-copy-c">Copiar código</button><button type="button" class="sh-go" id="sh-copy-m">Copiar mensaje</button></div>
+      <div class="sh-acts" style="margin-top:8px"><button type="button" class="sh-no" id="sh-close">Cerrar</button></div>
+    </div>
+  </div>
+</div>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N2NWVRZZ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div id="app">
 <header><div class="wrap bar">
@@ -401,7 +454,7 @@ let ACCESO=null,PUEDE_DESCARGAR=false,EXPIRA=0,temporizadorFin=null,arrancado=fa
 function formatoCodigo(v){const c=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);return c.length>4?c.slice(0,4)+"-"+c.slice(4):c;}
 function apiFetch(url){
   return fetch(url,{headers:{"X-Codigo-Acceso":ACCESO||""},cache:"no-store"}).then(r=>{
-    if(r.status===401){r.clone().json().then(d=>cerrarAcceso(d&&d.motivo==="caducado"?"g_fin":"g_rev")).catch(()=>cerrarAcceso("g_rev"));}
+    if(r.status===401){r.clone().json().then(d=>confirmarCierre(d&&d.motivo)).catch(()=>confirmarCierre(""));}
     return r;
   });
 }
@@ -420,7 +473,7 @@ function cerrarAcceso(k){
   ACCESO=null;PUEDE_DESCARGAR=false;EXPIRA=0;if(temporizadorFin)clearTimeout(temporizadorFin);if(vigilante){clearInterval(vigilante);vigilante=null;}
   Object.keys(cacheRecursos).forEach(k2=>delete cacheRecursos[k2]);
   DATA.forEach(e=>{e.fotos=[];e.videos=[];e.testimonios=[];e.eventos=[];e.portada="";e.cargado=false;e.errorCarga=false;});
-  closeLB(null,true);closeSofia();render();abrirPuerta(k);
+  ES_EQUIPO=false;document.body.classList.remove("equipo");cerrarCompartir();closeLB(null,true);closeSofia();render();abrirPuerta(k);
 }
 function pintarPill(){const p=document.getElementById("acceso-pill");if(!p||!EXPIRA)return;const d=new Date(EXPIRA);const hoy=new Date().toDateString()===d.toDateString();const opt=hoy?{hour:"2-digit",minute:"2-digit"}:{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"};p.innerHTML=tt("g_hasta")+" <b>"+d.toLocaleString(lang==="es"?"es-ES":"en-GB",opt)+"</b>";}
 // Vigilante: cada 60 s y al volver a la pestaña pregunta al servidor si el código sigue vivo.
@@ -430,13 +483,70 @@ async function comprobarSigueValido(){
   if(!ACCESO||document.body.classList.contains("bloqueado"))return;
   try{
     const r=await fetch("/api/recursos?accion=verificar",{headers:{"X-Codigo-Acceso":ACCESO},cache:"no-store"});
-    if(r.status===401){const d=await r.json().catch(()=>({}));cerrarAcceso(d.motivo==="caducado"?"g_fin":"g_rev");}
+    if(r.status===401){const d=await r.json().catch(()=>({}));confirmarCierre(d.motivo);}
   }catch(e){/* sin conexión: se vuelve a intentar en el siguiente ciclo */}
+}
+// Antes de echar a nadie se comprueba una segunda vez (1,5 s después). Si el código sigue
+// vivo, se recargan los datos y la persona sigue dentro; si no, se cierra la web.
+let comprobandoCierre=false;
+async function confirmarCierre(motivo){
+  if(comprobandoCierre||!ACCESO)return;
+  if(motivo==="caducado"){cerrarAcceso("g_fin");return;}
+  comprobandoCierre=true;
+  await new Promise(res=>setTimeout(res,1500));
+  try{
+    const r=await fetch("/api/recursos?accion=verificar",{headers:{"X-Codigo-Acceso":ACCESO||""},cache:"no-store"});
+    if(r.ok){comprobandoCierre=false;
+      DATA.forEach(e=>{if(!e.cargado){delete cacheRecursos[e.id];cargarRecursos(e.id).then(()=>render());}});return;}
+    const d=await r.json().catch(()=>({}));comprobandoCierre=false;cerrarAcceso(d.motivo==="caducado"?"g_fin":"g_rev");
+  }catch(e){comprobandoCierre=false;}
 }
 function arrancarVigilante(){if(vigilante)clearInterval(vigilante);vigilante=setInterval(comprobarSigueValido,60000);}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")comprobarSigueValido();});
 window.addEventListener("focus",comprobarSigueValido);
+// --- Compartir con un cliente (solo quien entra con su usuario CAP) ---
+let ES_EQUIPO=false;
+function abrirCompartir(){
+  const sel=document.getElementById("sh-l");
+  sel.innerHTML='<option value="">Toda la web</option>'+DATA.map(e=>'<option value="'+e.id+'">'+e.nombre_es+'</option>').join("");
+  sel.value=state.spec&&DATA.some(e=>e.id===state.spec)?state.spec:"";
+  ["sh-n"].forEach(id=>document.getElementById(id).value="");document.getElementById("sh-h").value="24";document.getElementById("sh-d").checked=false;
+  document.querySelectorAll(".sh-f").forEach(f=>f.classList.remove("err"));document.getElementById("sh-msg").textContent="";
+  document.getElementById("sh-form").style.display="";document.getElementById("sh-res").classList.remove("on");
+  document.getElementById("share-ov").classList.add("on");setTimeout(()=>document.getElementById("sh-n").focus(),50);
+}
+function cerrarCompartir(){document.getElementById("share-ov").classList.remove("on");}
+async function generarCompartir(){
+  const n=document.getElementById("sh-n").value.trim(),h=document.getElementById("sh-h").value,l=document.getElementById("sh-l").value;
+  const okN=n.length>=3,okH=!!h;
+  document.getElementById("shf-n").classList.toggle("err",!okN);document.getElementById("shf-h").classList.toggle("err",!okH);
+  if(!okN||!okH)return;
+  const b=document.getElementById("sh-go"),m=document.getElementById("sh-msg");b.disabled=true;b.textContent="Generando…";m.textContent="";
+  try{
+    const r=await fetch("/api/codigos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"compartir",acceso:ACCESO,nota:n,horas:Number(h),enlace:l,descarga:document.getElementById("sh-d").checked})});
+    const d=await r.json().catch(()=>({}));
+    if(d.ok){
+      document.getElementById("sh-cod").textContent=d.registro.codigo;
+      document.getElementById("sh-meta").textContent="Para "+n+" · válido hasta el "+new Date(d.registro.expira).toLocaleString("es-ES",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" · "+(d.registro.descarga?"con descarga":"solo ver");
+      document.getElementById("sh-txt").value=d.mensaje;
+      document.getElementById("sh-form").style.display="none";document.getElementById("sh-res").classList.add("on");
+    }else if(d.motivo==="sin_acceso_equipo"){m.textContent="Tu acceso de equipo ha caducado. Vuelve a entrar con tu usuario.";}
+    else{m.textContent="No se ha podido generar el código. Inténtalo de nuevo.";}
+  }catch(e){m.textContent="No hay conexión. Revisa internet e inténtalo de nuevo.";}
+  b.disabled=false;b.textContent="Generar código";
+}
+async function copiarTexto(t,btn,ok){try{await navigator.clipboard.writeText(t);}catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}const o=btn.textContent;btn.textContent=ok;setTimeout(()=>btn.textContent=o,1600);}
+document.getElementById("share-btn").addEventListener("click",abrirCompartir);
+document.getElementById("sh-cancel").addEventListener("click",cerrarCompartir);
+document.getElementById("sh-close").addEventListener("click",cerrarCompartir);
+document.getElementById("share-ov").addEventListener("click",e=>{if(e.target.id==="share-ov")cerrarCompartir();});
+document.getElementById("sh-go").addEventListener("click",generarCompartir);
+document.getElementById("sh-n").addEventListener("keydown",e=>{if(e.key==="Enter")generarCompartir();});
+document.getElementById("sh-n").addEventListener("input",()=>document.getElementById("shf-n").classList.remove("err"));
+document.getElementById("sh-copy-c").addEventListener("click",e=>copiarTexto(document.getElementById("sh-cod").textContent,e.target,"¡Copiado!"));
+document.getElementById("sh-copy-m").addEventListener("click",e=>copiarTexto(document.getElementById("sh-txt").value,e.target,"¡Copiado!"));
 function entrarCon(datos){
+  ES_EQUIPO=datos.tipo==="equipo";document.body.classList.toggle("equipo",ES_EQUIPO);
   arrancarVigilante();
   PUEDE_DESCARGAR=!!datos.descarga;EXPIRA=datos.expira||0;
   document.body.classList.remove("bloqueado");document.body.classList.add("dentro");pintarPill();
