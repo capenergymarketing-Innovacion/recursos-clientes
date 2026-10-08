@@ -4,7 +4,32 @@
 // Los códigos viven en Netlify Blobs (almacén "codigos-acceso").
 // Sin código válido esta función NO devuelve ningún archivo.
 // ---------------------------------------------------------------
+const crypto = require("crypto");
 const { getStore, connectLambda } = require("@netlify/blobs");
+
+// ---------- Pases firmados (acceso de equipo y sesión del generador) ----------
+// No dependen del almacén: el servidor firma el pase y lo comprueba con la misma
+// clave secreta, así que vale al instante y nadie puede falsificarlo.
+const SECRETO = process.env.CODIGOS_SECRET || process.env.GOOGLE_API_KEY || "";
+const b64u = (s) => Buffer.from(s).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+const desB64u = (s) => Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString();
+function firmarPase(tipo, datos) {
+  const cuerpo = b64u(JSON.stringify({ t: tipo, ...datos }));
+  const firma = crypto.createHmac("sha256", SECRETO).update(cuerpo).digest("base64url");
+  return tipo.toUpperCase().slice(0, 2) + "." + cuerpo + "." + firma;
+}
+function leerPase(pase, tipo) {
+  if (!SECRETO || typeof pase !== "string") return null;
+  const partes = pase.split(".");
+  if (partes.length !== 3) return null;
+  const esperada = crypto.createHmac("sha256", SECRETO).update(partes[1]).digest("base64url");
+  const a = Buffer.from(partes[2]), b = Buffer.from(esperada);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  let d; try { d = JSON.parse(desB64u(partes[1])); } catch (e) { return null; }
+  if (d.t !== tipo || !d.exp || Date.now() > d.exp) return null;
+  return d;
+}
+
 
 function normalizarCodigo(c) {
   const limpio = String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -14,10 +39,17 @@ function normalizarCodigo(c) {
 
 async function comprobarCodigo(event) {
   const h = event.headers || {};
-  const codigo = normalizarCodigo(h["x-codigo-acceso"] || h["X-Codigo-Acceso"]);
+  const bruto = String(h["x-codigo-acceso"] || h["X-Codigo-Acceso"] || "");
+  // Pase de equipo (usuario CAP validado por la hoja madre): se comprueba por firma, sin almacén
+  if (bruto.startsWith("EQ.")) {
+    const pase = leerPase(bruto, "equipo");
+    if (!pase) return { ok: false, motivo: "caducado" };
+    return { ok: true, codigo: "EQUIPO", expira: pase.exp, descarga: true, tipo: "equipo" };
+  }
+  const codigo = normalizarCodigo(bruto);
   if (!codigo) return { ok: false, motivo: "sin_codigo" };
   connectLambda(event);
-  const store = getStore({ name: "codigos-acceso", consistency: "strong" }); // lo recién guardado se ve al instante
+  const store = getStore("codigos-acceso");
   const datos = await store.get(codigo, { type: "json" });
   if (!datos) return { ok: false, motivo: "no_valido" };
   if (Date.now() > datos.expira) return { ok: false, motivo: "caducado" };

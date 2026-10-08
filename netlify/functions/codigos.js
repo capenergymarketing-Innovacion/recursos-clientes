@@ -17,11 +17,34 @@
 //
 // Almacenes (Netlify Blobs):
 //   codigos-acceso  -> un registro por código (clientes y equipo)
-//   sesiones-admin  -> sesiones del generador (8 horas)
 //   solicitudes     -> peticiones de código del equipo
 // ---------------------------------------------------------------
 const crypto = require("crypto");
 const { getStore, connectLambda } = require("@netlify/blobs");
+
+// ---------- Pases firmados (acceso de equipo y sesión del generador) ----------
+// No dependen del almacén: el servidor firma el pase y lo comprueba con la misma
+// clave secreta, así que vale al instante y nadie puede falsificarlo.
+const SECRETO = process.env.CODIGOS_SECRET || process.env.GOOGLE_API_KEY || "";
+const b64u = (s) => Buffer.from(s).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+const desB64u = (s) => Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString();
+function firmarPase(tipo, datos) {
+  const cuerpo = b64u(JSON.stringify({ t: tipo, ...datos }));
+  const firma = crypto.createHmac("sha256", SECRETO).update(cuerpo).digest("base64url");
+  return tipo.toUpperCase().slice(0, 2) + "." + cuerpo + "." + firma;
+}
+function leerPase(pase, tipo) {
+  if (!SECRETO || typeof pase !== "string") return null;
+  const partes = pase.split(".");
+  if (partes.length !== 3) return null;
+  const esperada = crypto.createHmac("sha256", SECRETO).update(partes[1]).digest("base64url");
+  const a = Buffer.from(partes[2]), b = Buffer.from(esperada);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  let d; try { d = JSON.parse(desB64u(partes[1])); } catch (e) { return null; }
+  if (d.t !== tipo || !d.exp || Date.now() > d.exp) return null;
+  return d;
+}
+
 
 const ALFABETO = "ABCDEFGHJKMNPQRTUVWXYZ2346789"; // sin 0/O, 1/I/L, 5/S
 const HORAS_PERMITIDAS = [2, 24, 48, 72];
@@ -74,13 +97,6 @@ async function crearCodigo(store, datos) {
   return registro;
 }
 
-async function sesionValida(store, token) {
-  if (!token || typeof token !== "string" || token.length < 30) return null;
-  const s = await store.get(token, { type: "json" });
-  if (!s) return null;
-  if (Date.now() > s.expira) { await store.delete(token); return null; }
-  return s;
-}
 
 async function listarTodo(store) {
   const { blobs } = await store.list();
@@ -134,10 +150,8 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); } catch (e) { return responde(400, { ok: false, motivo: "formato" }); }
 
   connectLambda(event);
-  // consistency "strong": lo que se guarda se puede leer al instante desde cualquier función
-  const codigos = getStore({ name: "codigos-acceso", consistency: "strong" });
-  const sesiones = getStore({ name: "sesiones-admin", consistency: "strong" });
-  const solicitudes = getStore({ name: "solicitudes", consistency: "strong" });
+  const codigos = getStore("codigos-acceso");
+  const solicitudes = getStore("solicitudes");
   const accion = String(body.accion || "");
 
   // ---------- ENTRAR al generador (admin o equipo) / EQUIPO a la web ----------
@@ -153,23 +167,23 @@ exports.handler = async (event) => {
     const nombre = v.nombre || usuario;
 
     if (accion === "equipo") {
-      const reg = await crearCodigo(codigos, { horas: HORAS_EQUIPO, descarga: true, tipo: "equipo", nota: "Equipo · " + nombre, creadoPor: usuario, creadoPorNombre: nombre });
-      return responde(200, { ok: true, codigo: reg.codigo, expira: reg.expira, descarga: true, tipo: "equipo", nombre });
+      const exp = Date.now() + HORAS_EQUIPO * 3600 * 1000;
+      const pase = firmarPase("equipo", { u: usuario, n: nombre, exp });
+      return responde(200, { ok: true, codigo: pase, expira: exp, descarga: true, tipo: "equipo", nombre });
     }
 
     const rol = admins().includes(usuario) ? "admin" : "equipo";
-    const token = crypto.randomBytes(32).toString("hex");
     const expira = Date.now() + HORAS_SESION * 3600 * 1000;
-    await sesiones.setJSON(token, { usuario, nombre, rol, expira });
+    const token = firmarPase("sesion", { u: usuario, n: nombre, exp: expira });
     return responde(200, { ok: true, token, nombre, rol, expira });
   }
 
   // ---------- EQUIPO dentro de la web: compartir con un cliente ----------
   // Lo autoriza el propio acceso de equipo (24 h, creado con su usuario CAP validado por la hoja madre).
   if (accion === "compartir") {
-    const acceso = String(body.acceso || "").toUpperCase();
-    const mio = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(acceso) ? await codigos.get(acceso, { type: "json" }) : null;
-    if (!mio || mio.tipo !== "equipo" || Date.now() > mio.expira) return responde(401, { ok: false, motivo: "sin_acceso_equipo" });
+    const p = leerPase(String(body.acceso || ""), "equipo");
+    if (!p) return responde(401, { ok: false, motivo: "sin_acceso_equipo" });
+    const mio = { creadoPor: p.u, creadoPorNombre: p.n };
     const nota = limpia(body.nota, 80);
     const horas = Number(body.horas);
     const enlace = ENLACES[body.enlace] !== undefined ? String(body.enlace || "") : null;
@@ -189,11 +203,12 @@ exports.handler = async (event) => {
   }
 
   // ---------- A partir de aquí hace falta sesión ----------
-  const sesion = await sesionValida(sesiones, body.token);
-  if (!sesion) return responde(401, { ok: false, motivo: "sesion" });
-  const esAdmin = sesion.rol === "admin" && admins().includes(sesion.usuario);
+  const ps = leerPase(String(body.token || ""), "sesion");
+  if (!ps) return responde(401, { ok: false, motivo: "sesion" });
+  const sesion = { usuario: ps.u, nombre: ps.n };
+  const esAdmin = admins().includes(sesion.usuario); // se comprueba en cada llamada contra CODIGOS_ADMIN
 
-  if (accion === "salir") { await sesiones.delete(body.token); return responde(200, { ok: true }); }
+  if (accion === "salir") return responde(200, { ok: true });
 
   // ---------- EQUIPO (y admin): pedir un código ----------
   if (accion === "solicitar") {
