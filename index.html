@@ -152,6 +152,14 @@
   .gate-lang{display:flex;justify-content:center;gap:6px;margin-top:14px}
   .gate-lang button{border:1px solid var(--line);background:#fff;border-radius:999px;font:inherit;font-size:.75rem;font-weight:600;color:var(--muted);padding:3px 10px;cursor:pointer}
   .gate-lang button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .gate-eq-link{margin-top:14px;border:0;background:none;font:inherit;font-size:.8rem;color:var(--muted);text-decoration:underline;cursor:pointer}
+  .gate-eq{display:none;margin-top:14px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
+  .gate-eq.on{display:block}
+  .eq-f{margin-bottom:10px}
+  .eq-f input{width:100%;border:1px solid #CFD9E0;border-radius:10px;padding:11px 12px;font:inherit;background:#F6F9FB}
+  .eq-f input:focus{outline:3px solid #CFE2F0;border-color:var(--accent);background:#fff}
+  .eq-e{display:none;color:#C0392B;font-size:.8rem;font-weight:600;margin-top:4px}
+  .eq-f.err input{border-color:#C0392B;background:#FDF3F2}.eq-f.err .eq-e{display:block}
   .acceso-pill{position:fixed;left:16px;bottom:16px;z-index:45;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.78rem;color:var(--muted);box-shadow:var(--shadow);display:none}
   .acceso-pill b{color:var(--ink)}
   body.dentro .acceso-pill{display:block}
@@ -170,6 +178,13 @@
     <div class="gate-msg" id="gate-msg" role="alert"></div>
     <button class="gate-btn" id="gate-btn" type="button">Entrar</button>
     <p class="gate-help" id="gate-help">¿No tienes código? <a id="gate-wa" href="https://wa.me/34671583651" target="_blank" rel="noopener">Pídelo por WhatsApp</a></p>
+    <button type="button" class="gate-eq-link" id="gate-eq-link">¿Eres del equipo Capenergy? Entra con tu usuario</button>
+    <div class="gate-eq" id="gate-eq">
+      <div class="eq-f" id="eq-fu"><input id="eq-u" type="text" placeholder="CAP-XXXXXX-26" autocomplete="username" autocapitalize="characters" spellcheck="false" aria-label="Usuario"><div class="eq-e">Escribe tu usuario con el formato CAP-XXXXXX-26.</div></div>
+      <div class="eq-f" id="eq-fp"><input id="eq-p" type="password" placeholder="Contraseña" autocomplete="current-password" aria-label="Contraseña"><div class="eq-e">Escribe tu contraseña.</div></div>
+      <div class="gate-msg" id="eq-msg" role="alert"></div>
+      <button class="gate-btn" id="eq-btn" type="button">Entrar como equipo</button>
+    </div>
     <div class="gate-lang"><button type="button" id="g-es" onclick="setLang('es')">ES</button><button type="button" id="g-en" onclick="setLang('en')">EN</button></div>
   </div>
 </div>
@@ -273,6 +288,8 @@ const T={
  g_fin:{es:"Tu acceso ha terminado. Pide un código nuevo para seguir viendo el material.",en:"Your access has ended. Ask for a new code to keep viewing the material."},
  g_red:{es:"No se ha podido comprobar el código. Revisa tu conexión e inténtalo de nuevo.",en:"Couldn't check the code. Check your connection and try again."},
  g_hasta:{es:"Acceso válido hasta",en:"Access valid until"},
+ g_eq:{es:"¿Eres del equipo Capenergy? Entra con tu usuario",en:"Capenergy team? Sign in with your user"},
+ g_rev:{es:"Tu acceso ha sido retirado. Pide un código nuevo a tu contacto de Capenergy.",en:"Your access has been withdrawn. Ask your Capenergy contact for a new code."},
 };
 function tt(k){return T[k][lang];}
 function setLang(l){lang=l;document.getElementById("lang-es").classList.toggle("on",l==="es");document.getElementById("lang-en").classList.toggle("on",l==="en");document.documentElement.lang=l;actualizarSofia();textosPuerta();render();}
@@ -384,13 +401,13 @@ let ACCESO=null,PUEDE_DESCARGAR=false,EXPIRA=0,temporizadorFin=null,arrancado=fa
 function formatoCodigo(v){const c=String(v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);return c.length>4?c.slice(0,4)+"-"+c.slice(4):c;}
 function apiFetch(url){
   return fetch(url,{headers:{"X-Codigo-Acceso":ACCESO||""},cache:"no-store"}).then(r=>{
-    if(r.status===401){r.clone().json().then(d=>cerrarAcceso(d&&d.motivo==="caducado"?"g_cad":"g_mal")).catch(()=>cerrarAcceso("g_mal"));}
+    if(r.status===401){r.clone().json().then(d=>cerrarAcceso(d&&d.motivo==="caducado"?"g_fin":"g_rev")).catch(()=>cerrarAcceso("g_rev"));}
     return r;
   });
 }
 function textosPuerta(){
   const set=(id,k)=>{const el=document.getElementById(id);if(el)el.textContent=tt(k);};
-  set("gate-t","g_t");set("gate-sub","g_sub");set("gate-wa","g_wa");
+  set("gate-t","g_t");set("gate-sub","g_sub");set("gate-wa","g_wa");set("gate-eq-link","g_eq");
   const b=document.getElementById("gate-btn");if(b&&!b.disabled)b.textContent=tt("g_btn");
   const h=document.getElementById("gate-help");if(h&&h.firstChild)h.firstChild.nodeValue=tt("g_help")+" ";
   const ge=document.getElementById("g-es"),gn=document.getElementById("g-en");if(ge){ge.classList.toggle("on",lang==="es");gn.classList.toggle("on",lang==="en");}
@@ -400,13 +417,27 @@ function msgPuerta(k,info){const m=document.getElementById("gate-msg");m.textCon
 function abrirPuerta(k){document.body.classList.add("bloqueado");document.body.classList.remove("dentro");msgPuerta(k||"");const i=document.getElementById("gate-in");setTimeout(()=>i.focus(),60);}
 function cerrarAcceso(k){
   try{sessionStorage.removeItem(CLAVE_ACCESO);}catch(e){}
-  ACCESO=null;PUEDE_DESCARGAR=false;EXPIRA=0;if(temporizadorFin)clearTimeout(temporizadorFin);
+  ACCESO=null;PUEDE_DESCARGAR=false;EXPIRA=0;if(temporizadorFin)clearTimeout(temporizadorFin);if(vigilante){clearInterval(vigilante);vigilante=null;}
   Object.keys(cacheRecursos).forEach(k2=>delete cacheRecursos[k2]);
   DATA.forEach(e=>{e.fotos=[];e.videos=[];e.testimonios=[];e.eventos=[];e.portada="";e.cargado=false;e.errorCarga=false;});
   closeLB(null,true);closeSofia();render();abrirPuerta(k);
 }
 function pintarPill(){const p=document.getElementById("acceso-pill");if(!p||!EXPIRA)return;const d=new Date(EXPIRA);const hoy=new Date().toDateString()===d.toDateString();const opt=hoy?{hour:"2-digit",minute:"2-digit"}:{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"};p.innerHTML=tt("g_hasta")+" <b>"+d.toLocaleString(lang==="es"?"es-ES":"en-GB",opt)+"</b>";}
+// Vigilante: cada 60 s y al volver a la pestaña pregunta al servidor si el código sigue vivo.
+// Si se ha revocado o caducado, la web se cierra sola sin recargar.
+let vigilante=null;
+async function comprobarSigueValido(){
+  if(!ACCESO||document.body.classList.contains("bloqueado"))return;
+  try{
+    const r=await fetch("/api/recursos?accion=verificar",{headers:{"X-Codigo-Acceso":ACCESO},cache:"no-store"});
+    if(r.status===401){const d=await r.json().catch(()=>({}));cerrarAcceso(d.motivo==="caducado"?"g_fin":"g_rev");}
+  }catch(e){/* sin conexión: se vuelve a intentar en el siguiente ciclo */}
+}
+function arrancarVigilante(){if(vigilante)clearInterval(vigilante);vigilante=setInterval(comprobarSigueValido,60000);}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")comprobarSigueValido();});
+window.addEventListener("focus",comprobarSigueValido);
 function entrarCon(datos){
+  arrancarVigilante();
   PUEDE_DESCARGAR=!!datos.descarga;EXPIRA=datos.expira||0;
   document.body.classList.remove("bloqueado");document.body.classList.add("dentro");pintarPill();
   if(temporizadorFin)clearTimeout(temporizadorFin);
@@ -436,7 +467,28 @@ async function enviarCodigo(){
   }catch(e){msgPuerta("g_red");}
   b.disabled=false;b.textContent=tt("g_btn");
 }
+
+// --- Entrada del equipo con usuario CAP (valida la hoja madre, acceso 24 h con descarga) ---
+function toggleEquipo(){const b=document.getElementById("gate-eq");b.classList.toggle("on");if(b.classList.contains("on"))document.getElementById("eq-u").focus();}
+async function entrarEquipo(){
+  const u=document.getElementById("eq-u"),p=document.getElementById("eq-p"),m=document.getElementById("eq-msg"),b=document.getElementById("eq-btn");
+  u.value=u.value.trim().toUpperCase();m.textContent="";
+  const okU=/^CAP-[A-Z0-9]{6}-\d{2}$/.test(u.value),okP=!!p.value.trim();
+  document.getElementById("eq-fu").classList.toggle("err",!okU);document.getElementById("eq-fp").classList.toggle("err",!okP);
+  if(!okU||!okP)return;
+  b.disabled=true;b.textContent=lang==="es"?"Comprobando…":"Checking…";
+  try{
+    const r=await fetch("/api/codigos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"equipo",usuario:u.value,clave:p.value})});
+    const d=await r.json().catch(()=>({}));
+    if(d.ok){ACCESO=d.codigo;try{sessionStorage.setItem(CLAVE_ACCESO,d.codigo);}catch(e){}p.value="";document.getElementById("gate-eq").classList.remove("on");entrarCon(d);}
+    else{const M={no_valido:"Usuario o contraseña incorrectos.",caducado:"Tu acceso ha caducado. Contacta con el departamento de Marketing.",bloqueado:"Demasiados intentos fallidos. Espera "+(d.minutos||15)+" minutos y vuelve a probar.",debe_cambiar:"Tienes una contraseña temporal. Cámbiala primero en el panel de herramientas."};m.textContent=M[d.motivo]||"No se ha podido comprobar el acceso. Inténtalo de nuevo.";p.value="";p.focus();}
+  }catch(e){m.textContent="No hay conexión. Revisa internet e inténtalo de nuevo.";}
+  b.disabled=false;b.textContent=lang==="es"?"Entrar como equipo":"Sign in as team";
+}
 async function iniciarAcceso(){
+  document.getElementById("gate-eq-link").addEventListener("click",toggleEquipo);
+  document.getElementById("eq-btn").addEventListener("click",entrarEquipo);
+  ["eq-u","eq-p"].forEach(id=>{const el=document.getElementById(id);el.addEventListener("keydown",e=>{if(e.key==="Enter")entrarEquipo();});el.addEventListener("input",()=>el.parentNode.classList.remove("err"));});
   const i=document.getElementById("gate-in");
   i.addEventListener("input",()=>{const pos=i.value.length;i.value=formatoCodigo(i.value);if(document.getElementById("gate-slot").classList.contains("err"))msgPuerta("");});
   i.addEventListener("keydown",e=>{if(e.key==="Enter")enviarCodigo();});
