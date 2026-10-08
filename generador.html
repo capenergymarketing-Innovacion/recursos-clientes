@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Generador de códigos · Recursos Capenergy</title>
+<title>Códigos de acceso · Recursos Capenergy</title>
 <style>
   :root{--ink:#14202B;--muted:#5C6B78;--line:#E3E9EE;--bg:#F3F6F9;--white:#fff;--accent:#1C6BA0;--accent-soft:#EAF2F8;--ok:#1E7B4F;--err:#C0392B;--font-d:Georgia,"Times New Roman",serif;--font-b:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -70,6 +70,27 @@
   .nadie{padding:22px;text-align:center;color:var(--muted);font-size:.9rem}
   @media (max-width:760px){.grid,.row{grid-template-columns:1fr}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  body.admin .solo-admin{display:block} body.equipo .solo-equipo{display:block}
+  .solo-admin,.solo-equipo{display:none}
+  .pend{display:grid;gap:14px;margin-bottom:6px}
+  .sol{background:var(--white);border:1px solid var(--line);border-left:4px solid #E8A33C;border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+  .sol h3{font-size:1.02rem;margin-bottom:2px}
+  .sol .em{color:var(--accent);font-size:.88rem;word-break:break-all}
+  .sol .mot{margin:8px 0 6px;font-size:.92rem;color:var(--ink)}
+  .sol .det{font-size:.8rem;color:var(--muted)}
+  .sol .acc{display:flex;flex-direction:column;gap:8px;align-items:stretch;min-width:190px}
+  .sol .acc label.mini{display:flex;gap:8px;align-items:center;font-size:.82rem;font-weight:600;margin:0}
+  .sol .acc .btn{padding:10px 14px;font-size:.88rem}
+  .btn.rech{background:#fff;color:var(--err);border:1px solid #E7C3BE}
+  .res{font-size:.85rem;font-weight:600;padding:8px 10px;border-radius:8px;background:#E6F4EC;color:var(--ok)}
+  .res.warn{background:#FFF6E5;color:#8A5A00}
+  .ok-box{display:none;background:#E6F4EC;border:1px solid #BFE3CD;color:#14532D;border-radius:12px;padding:14px 16px;font-size:.92rem;margin-top:14px}
+  .ok-box.on{display:block}
+  .tag.pendiente{background:#FFF6E5;color:#8A5A00}.tag.aprobada{background:#E6F4EC;color:var(--ok)}.tag.rechazada{background:#FDEDEB;color:var(--err)}
+  .tag.equipo{background:#EAF2F8;color:var(--accent)}
+  .verweb{display:inline-block;margin-top:6px;color:var(--accent);font-weight:600;text-decoration:underline}
+  @media (max-width:760px){.sol{grid-template-columns:1fr}.sol .acc{min-width:0}}
 </style>
 </head>
 <body>
@@ -78,8 +99,8 @@
 
   <!-- ENTRADA: valida contra la hoja madre de altas -->
   <section id="login">
-    <h1>Generador de códigos</h1>
-    <p class="lead">Entra con tu usuario y contraseña del panel de herramientas.</p>
+    <h1>Códigos de acceso</h1>
+    <p class="lead">Entra con tu usuario y contraseña del panel de herramientas. Si eres del equipo, desde aquí puedes pedir un código para compartir el material con un cliente.</p>
     <div class="panel">
       <div class="field" id="f-u"><label for="in-u">Usuario</label><input type="text" id="in-u" placeholder="CAP-XXXXXX-26" autocomplete="username" autocapitalize="characters" spellcheck="false"><div class="ferr">Escribe tu usuario con el formato CAP-XXXXXX-26.</div></div>
       <div class="field" id="f-p"><label for="in-p">Contraseña</label><input type="password" id="in-p" autocomplete="current-password"><div class="ferr">Escribe tu contraseña.</div></div>
@@ -90,6 +111,38 @@
 
   <!-- GENERADOR -->
   <section id="app">
+
+    <!-- ===== EQUIPO: pedir un código ===== -->
+    <div class="solo-equipo">
+      <h1>Pedir un código de acceso</h1>
+      <p class="lead">Rellena los datos de la persona con la que quieres compartir el material. Marketing revisa la solicitud y, al aprobarla, el código le llega directamente a su correo.</p>
+      <div class="panel" style="max-width:640px">
+        <div class="row">
+          <div class="field" id="f-dn"><label for="in-dn">Nombre de la persona</label><input type="text" id="in-dn" maxlength="80" placeholder="Ej.: Gala Martínez"><div class="ferr">Escribe el nombre de la persona (mínimo 2 caracteres).</div></div>
+          <div class="field" id="f-de"><label for="in-de">Su email</label><input type="text" id="in-de" maxlength="120" inputmode="email" placeholder="nombre@clinica.com"><div class="ferr">Escribe un email válido, por ejemplo nombre@clinica.com.</div></div>
+        </div>
+        <div class="field" id="f-mot"><label for="in-mot">¿Para qué lo necesita? <span class="hint">Clínica, interés, contexto</span></label><input type="text" id="in-mot" maxlength="200" placeholder="Ej.: Clínica de podología, quiere ver los casos de pie diabético"><div class="ferr">Explica en una frase para qué lo necesita (mínimo 5 caracteres).</div></div>
+        <div class="row">
+          <div class="field" id="f-sh"><label for="in-sh">Duración</label><select id="in-sh"><option value="">Elige una duración</option><option value="2">2 horas</option><option value="24">24 horas</option><option value="48">48 horas</option><option value="72">72 horas</option></select><div class="ferr">Elige cuánto tiempo necesita el acceso.</div></div>
+          <div class="field" id="f-sl"><label for="in-sl">Qué debe ver</label><select id="in-sl"><option value="">Toda la web</option><option value="msk">Musculoesquelético</option><option value="urogine">Uroginecología</option><option value="drakarian">Estética · DRAKARIAN</option><option value="vascular">Vascular</option><option value="deporte">Deporte</option><option value="eventos">Eventos y webinars</option></select><div class="ferr">Elige el enlace.</div></div>
+        </div>
+        <label class="check" for="in-sd"><input type="checkbox" id="in-sd"><div><b>Pedir con descarga</b><span>Solo si es cliente con equipo y necesita el material para su clínica. Marketing decide al aprobar.</span></div></label>
+        <div class="msg" id="sol-msg" role="alert"></div>
+        <button class="btn full" id="btn-sol" type="button">Enviar solicitud</button>
+        <div class="ok-box" id="sol-ok"></div>
+      </div>
+      <a class="verweb" href="/" target="_blank" rel="noopener">Ver la web de recursos (entra con «¿Eres del equipo?»)</a>
+      <h2>Mis solicitudes</h2>
+      <div class="tabla" id="tabla-mias"><div class="nadie">Cargando…</div></div>
+    </div>
+
+    <!-- ===== ADMIN ===== -->
+    <div class="solo-admin">
+    <div id="bloque-pend" style="display:none">
+      <h1 style="margin-bottom:14px">Solicitudes pendientes</h1>
+      <div class="pend" id="pend"></div>
+      <div style="height:26px"></div>
+    </div>
     <h1>Crear un código de acceso</h1>
     <p class="lead">Cada código abre la web de recursos durante el tiempo que elijas. Pasado ese tiempo deja de funcionar solo.</p>
 
@@ -135,6 +188,7 @@
 
     <h2>Códigos activos</h2>
     <div class="tabla" id="tabla"><div class="nadie">Cargando…</div></div>
+    </div>
   </section>
 </main>
 <div class="toast" id="toast"></div>
@@ -166,10 +220,9 @@ async function entrar(){
   const b=$("btn-login");b.disabled=true;b.textContent="Comprobando…";
   try{
     const d=await llamar({accion:"entrar",usuario:u,clave:p});
-    if(d.ok){TOKEN=d.token;try{sessionStorage.setItem(CLAVE_SESION,JSON.stringify({t:d.token,n:d.nombre,e:d.expira}));}catch(e){}$("in-p").value="";dentro(d.nombre);}
+    if(d.ok){TOKEN=d.token;try{sessionStorage.setItem(CLAVE_SESION,JSON.stringify({t:d.token,n:d.nombre,e:d.expira,r:d.rol}));}catch(e){}$("in-p").value="";dentro(d.nombre,d.rol);}
     else{
-      const M={sin_permiso:"Tu usuario no tiene permiso para generar códigos. Habla con Marketing.",
-        no_valido:"Usuario o contraseña incorrectos.",
+      const M={        no_valido:"Usuario o contraseña incorrectos.",
         caducado:"Tu acceso ha caducado. Contacta con el departamento de Marketing.",
         bloqueado:"Demasiados intentos fallidos. Espera "+(d.minutos||15)+" minutos y vuelve a probar.",
         debe_cambiar:"Tienes una contraseña temporal. Entra primero en el panel de herramientas para cambiarla.",
@@ -180,11 +233,13 @@ async function entrar(){
   }catch(e){$("login-msg").textContent="No hay conexión. Revisa internet e inténtalo de nuevo.";}
   b.disabled=false;b.textContent="Entrar";
 }
-function dentro(nombre){document.body.classList.add("dentro");$("quien").textContent=nombre||"";listar();$("in-nota").focus();}
+let ROL="equipo";
+function dentro(nombre,rol){ROL=rol==="admin"?"admin":"equipo";document.body.classList.add("dentro");document.body.classList.remove("admin","equipo");document.body.classList.add(ROL);$("quien").textContent=nombre||"";
+  if(ROL==="admin"){listar();pendientes();$("in-nota").focus();}else{misSolicitudes();$("in-dn").focus();}}
 async function salir(aviso){
   if(TOKEN&&!aviso){llamar({accion:"salir",token:TOKEN});}
   TOKEN=null;try{sessionStorage.removeItem(CLAVE_SESION);}catch(e){}
-  document.body.classList.remove("dentro");$("llave").classList.remove("on");$("login-msg").textContent=aviso||"";
+  document.body.classList.remove("dentro","admin","equipo");$("llave").classList.remove("on");$("login-msg").textContent=aviso||"";
 }
 
 /* ---------- Generar ---------- */
@@ -225,9 +280,9 @@ async function listar(){
   if(!d||!d.ok){if(d&&d.motivo!=="sesion")$("tabla").innerHTML='<div class="nadie">No se ha podido cargar la lista.</div>';return;}
   if(!d.activos.length){$("tabla").innerHTML='<div class="nadie">No hay códigos activos ahora mismo.</div>';return;}
   $("tabla").innerHTML='<table><thead><tr><th>Para</th><th>Código</th><th>Caduca</th><th>Descarga</th><th></th></tr></thead><tbody>'+
-    d.activos.map(a=>'<tr><td>'+esc(a.nota)+'</td><td class="c">'+a.codigo+'</td><td>'+fecha(a.expira)+'</td><td><span class="tag '+(a.descarga?'si':'no')+'">'+(a.descarga?'Sí':'No')+'</span></td><td><button class="rev" type="button" data-rev="'+a.codigo+'">Revocar</button></td></tr>').join('')+'</tbody></table>';
+    d.activos.map(a=>'<tr><td>'+(a.tipo==="equipo"?'<span class="tag equipo">Equipo</span> ':'')+esc(a.nota)+'</td><td class="c">'+a.codigo+'</td><td>'+fecha(a.expira)+'</td><td><span class="tag '+(a.descarga?'si':'no')+'">'+(a.descarga?'Sí':'No')+'</span></td><td><button class="rev" type="button" data-rev="'+a.codigo+'">Revocar</button></td></tr>').join('')+'</tbody></table>';
   $("tabla").querySelectorAll("[data-rev]").forEach(b=>b.addEventListener("click",async()=>{
-    const c=b.dataset.rev;if(!confirm("¿Revocar el código "+c+"? La persona dejará de ver el material al momento."))return;
+    const c=b.dataset.rev;if(!confirm("¿Revocar el código "+c+"? La web se le cerrará sola en menos de un minuto."))return;
     b.disabled=true;const r=await llamar({accion:"revocar",token:TOKEN,codigo:c});
     if(r.ok){toast("Código revocado");listar();}else{b.disabled=false;}
   }));
@@ -243,7 +298,57 @@ $("in-nota").addEventListener("keydown",e=>{if(e.key==="Enter")generar();});
 $("btn-gen").addEventListener("click",generar);
 $("salir").addEventListener("click",()=>salir());
 $("in-link").addEventListener("change",()=>{if(ultimo&&$("llave").classList.contains("on")){const r={codigo:ultimo.cod,nota:$("r-nota").textContent};ultimo.link=enlace();ultimo.msg=$("r-msg").value=$("r-msg").value.replace(/https:\/\/capenergy-recursosclientes\.netlify\.app\/\S*/,ultimo.link);}});
-try{const s=JSON.parse(sessionStorage.getItem(CLAVE_SESION)||"null");if(s&&s.t&&s.e>Date.now()){TOKEN=s.t;dentro(s.n);}}catch(e){}
+
+/* ---------- EQUIPO: pedir código ---------- */
+const RE_MAIL=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+async function solicitar(){
+  const dn=$("in-dn").value.trim(),de=$("in-de").value.trim().toLowerCase(),mot=$("in-mot").value.trim(),h=$("in-sh").value;
+  $("sol-msg").textContent="";$("sol-ok").classList.remove("on");
+  const a=marcar("f-dn",dn.length<2),b=marcar("f-de",!RE_MAIL.test(de)),c=marcar("f-mot",mot.length<5),d2=marcar("f-sh",!h);
+  if(!(a&&b&&c&&d2)){const p=document.querySelector(".solo-equipo .field.err input,.solo-equipo .field.err select");if(p)p.focus();return;}
+  const btn=$("btn-sol");btn.disabled=true;btn.textContent="Enviando…";
+  try{
+    const r=await llamar({accion:"solicitar",token:TOKEN,destNombre:dn,destEmail:de,motivo:mot,horas:Number(h),enlace:$("in-sl").value,descarga:$("in-sd").checked});
+    if(r.ok){["in-dn","in-de","in-mot"].forEach(id=>$(id).value="");$("in-sh").value="";$("in-sd").checked=false;
+      $("sol-ok").innerHTML="Solicitud enviada. Cuando Marketing la apruebe, <b>"+esc(dn)+"</b> recibirá el código en <b>"+esc(de)+"</b>.";$("sol-ok").classList.add("on");misSolicitudes();}
+    else if(r.motivo==="campos"){(r.errores||[]).forEach(f=>{const m={destNombre:"f-dn",destEmail:"f-de",motivo:"f-mot",horas:"f-sh",enlace:"f-sl"}[f];if(m)marcar(m,true);});}
+    else if(r.motivo!=="sesion"){$("sol-msg").textContent="No se ha podido enviar la solicitud. Inténtalo de nuevo.";}
+  }catch(e){$("sol-msg").textContent="No hay conexión. Revisa internet e inténtalo de nuevo.";}
+  btn.disabled=false;btn.textContent="Enviar solicitud";
+}
+async function misSolicitudes(){
+  const d=await llamar({accion:"mis_solicitudes",token:TOKEN}).catch(()=>null);
+  if(!d||!d.ok){if(d&&d.motivo!=="sesion")$("tabla-mias").innerHTML='<div class="nadie">No se ha podido cargar la lista.</div>';return;}
+  if(!d.solicitudes.length){$("tabla-mias").innerHTML='<div class="nadie">Todavía no has pedido ningún código.</div>';return;}
+  const E={pendiente:"Pendiente",aprobada:"Aprobada · enviada",rechazada:"Rechazada"};
+  $("tabla-mias").innerHTML='<table><thead><tr><th>Para</th><th>Email</th><th>Pedida</th><th>Estado</th></tr></thead><tbody>'+
+    d.solicitudes.map(x=>'<tr><td>'+esc(x.destNombre)+'</td><td>'+esc(x.destEmail)+'</td><td>'+fecha(x.creado)+'</td><td><span class="tag '+x.estado+'">'+(x.estado==="aprobada"&&x.enviado===false?"Aprobada · Marketing la envía":E[x.estado])+'</span></td></tr>').join('')+'</tbody></table>';
+}
+/* ---------- ADMIN: solicitudes pendientes ---------- */
+const NOMBRE_ENLACE={"":"Toda la web",msk:"Musculoesquelético",urogine:"Uroginecología",drakarian:"Estética · DRAKARIAN",vascular:"Vascular",deporte:"Deporte",eventos:"Eventos y webinars"};
+async function pendientes(){
+  const d=await llamar({accion:"pendientes",token:TOKEN}).catch(()=>null);
+  if(!d||!d.ok)return;
+  $("bloque-pend").style.display=d.pendientes.length?"block":"none";
+  $("pend").innerHTML=d.pendientes.map(p=>'<div class="sol" id="s-'+p.id+'"><div><h3>'+esc(p.destNombre)+'</h3><div class="em">'+esc(p.destEmail)+'</div><div class="mot">'+esc(p.motivo)+'</div><div class="det">Pide '+esc(p.solicitanteNombre)+' · '+fecha(p.creado)+' · '+p.horas+' horas · '+NOMBRE_ENLACE[p.enlace||""]+'</div></div>'+
+    '<div class="acc"><label class="mini"><input type="checkbox" '+(p.descarga?'checked':'')+' data-dl="'+p.id+'"> Permitir descarga</label><button class="btn" type="button" data-apr="'+p.id+'">Aprobar y enviar</button><button class="btn rech" type="button" data-rec="'+p.id+'">Rechazar</button></div></div>').join('');
+  $("pend").querySelectorAll("[data-apr]").forEach(b=>b.addEventListener("click",()=>resolver(b.dataset.apr,"aprobar")));
+  $("pend").querySelectorAll("[data-rec]").forEach(b=>b.addEventListener("click",()=>{if(confirm("¿Rechazar esta solicitud? No se enviará ningún código."))resolver(b.dataset.rec,"rechazar");}));
+}
+async function resolver(id,accion){
+  const caja=$("s-"+id);const acc=caja.querySelector(".acc");const dl=caja.querySelector("[data-dl]").checked;
+  acc.querySelectorAll("button").forEach(b=>b.disabled=true);
+  const r=await llamar({accion,token:TOKEN,id,descarga:dl}).catch(()=>null);
+  if(!r||!r.ok){acc.querySelectorAll("button").forEach(b=>b.disabled=false);if(r&&r.motivo==="ya_resuelta"){pendientes();}else{toast("No se ha podido completar. Inténtalo de nuevo.");}return;}
+  if(accion==="rechazar"){acc.innerHTML='<div class="res warn">Rechazada</div>';}
+  else if(r.enviado){acc.innerHTML='<div class="res">Código '+r.registro.codigo+' enviado por email</div>';listar();}
+  else{acc.innerHTML='<div class="res warn">Código '+r.registro.codigo+' creado, pero el email no salió. Envíalo tú:<textarea class="msgtxt" readonly>'+esc(r.mensaje)+'</textarea></div>';listar();}
+  caja.style.borderLeftColor=accion==="rechazar"?"#C0392B":"#1E7B4F";
+}
+$("btn-sol").addEventListener("click",solicitar);
+["in-dn","in-de","in-mot"].forEach(id=>$(id).addEventListener("input",()=>$(id).closest(".field").classList.remove("err")));
+$("in-sh").addEventListener("change",()=>$("f-sh").classList.remove("err"));
+try{const s=JSON.parse(sessionStorage.getItem(CLAVE_SESION)||"null");if(s&&s.t&&s.e>Date.now()){TOKEN=s.t;dentro(s.n,s.r);}}catch(e){}
 </script>
 </body>
 </html>
