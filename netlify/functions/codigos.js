@@ -134,9 +134,10 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); } catch (e) { return responde(400, { ok: false, motivo: "formato" }); }
 
   connectLambda(event);
-  const codigos = getStore("codigos-acceso");
-  const sesiones = getStore("sesiones-admin");
-  const solicitudes = getStore("solicitudes");
+  // consistency "strong": lo que se guarda se puede leer al instante desde cualquier función
+  const codigos = getStore({ name: "codigos-acceso", consistency: "strong" });
+  const sesiones = getStore({ name: "sesiones-admin", consistency: "strong" });
+  const solicitudes = getStore({ name: "solicitudes", consistency: "strong" });
   const accion = String(body.accion || "");
 
   // ---------- ENTRAR al generador (admin o equipo) / EQUIPO a la web ----------
@@ -152,8 +153,8 @@ exports.handler = async (event) => {
     const nombre = v.nombre || usuario;
 
     if (accion === "equipo") {
-      const reg = await crearCodigo(codigos, { horas: HORAS_EQUIPO, descarga: true, tipo: "equipo", nota: "Equipo · " + nombre, creadoPor: usuario });
-      return responde(200, { ok: true, codigo: reg.codigo, expira: reg.expira, descarga: true, nombre });
+      const reg = await crearCodigo(codigos, { horas: HORAS_EQUIPO, descarga: true, tipo: "equipo", nota: "Equipo · " + nombre, creadoPor: usuario, creadoPorNombre: nombre });
+      return responde(200, { ok: true, codigo: reg.codigo, expira: reg.expira, descarga: true, tipo: "equipo", nombre });
     }
 
     const rol = admins().includes(usuario) ? "admin" : "equipo";
@@ -161,6 +162,30 @@ exports.handler = async (event) => {
     const expira = Date.now() + HORAS_SESION * 3600 * 1000;
     await sesiones.setJSON(token, { usuario, nombre, rol, expira });
     return responde(200, { ok: true, token, nombre, rol, expira });
+  }
+
+  // ---------- EQUIPO dentro de la web: compartir con un cliente ----------
+  // Lo autoriza el propio acceso de equipo (24 h, creado con su usuario CAP validado por la hoja madre).
+  if (accion === "compartir") {
+    const acceso = String(body.acceso || "").toUpperCase();
+    const mio = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(acceso) ? await codigos.get(acceso, { type: "json" }) : null;
+    if (!mio || mio.tipo !== "equipo" || Date.now() > mio.expira) return responde(401, { ok: false, motivo: "sin_acceso_equipo" });
+    const nota = limpia(body.nota, 80);
+    const horas = Number(body.horas);
+    const enlace = ENLACES[body.enlace] !== undefined ? String(body.enlace || "") : null;
+    const errores = [];
+    if (nota.length < 3) errores.push("nota");
+    if (!HORAS_PERMITIDAS.includes(horas)) errores.push("horas");
+    if (enlace === null) errores.push("enlace");
+    if (errores.length) return responde(400, { ok: false, motivo: "campos", errores });
+    const reg = await crearCodigo(codigos, {
+      horas, nota, descarga: body.descarga === true, tipo: "cliente", enlace,
+      creadoPor: mio.creadoPor, creadoPorNombre: mio.creadoPorNombre || mio.creadoPor,
+    });
+    const link = enlaceDe(enlace);
+    const durac = horas === 2 ? "2 horas" : horas + " horas";
+    const mensaje = "Hola, te comparto el material de Capenergy:\n" + link + "\n\nPara entrar, introduce este código: " + reg.codigo + "\nEl código es personal y funciona durante " + durac + ".";
+    return responde(200, { ok: true, registro: reg, enlace: link, mensaje });
   }
 
   // ---------- A partir de aquí hace falta sesión ----------

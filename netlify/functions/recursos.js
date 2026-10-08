@@ -17,11 +17,11 @@ async function comprobarCodigo(event) {
   const codigo = normalizarCodigo(h["x-codigo-acceso"] || h["X-Codigo-Acceso"]);
   if (!codigo) return { ok: false, motivo: "sin_codigo" };
   connectLambda(event);
-  const store = getStore("codigos-acceso");
+  const store = getStore({ name: "codigos-acceso", consistency: "strong" }); // lo recién guardado se ve al instante
   const datos = await store.get(codigo, { type: "json" });
   if (!datos) return { ok: false, motivo: "no_valido" };
   if (Date.now() > datos.expira) return { ok: false, motivo: "caducado" };
-  return { ok: true, codigo, expira: datos.expira, descarga: !!datos.descarga };
+  return { ok: true, codigo, expira: datos.expira, descarga: !!datos.descarga, tipo: datos.tipo || "cliente" };
 }
 
 // Sin permiso de descarga se quitan los enlaces a Drive (Abrir y Descargar).
@@ -180,7 +180,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ ok: true, expira: acceso.expira, descarga: acceso.descarga }),
+      body: JSON.stringify({ ok: true, expira: acceso.expira, descarga: acceso.descarga, tipo: acceso.tipo }),
     };
   }
 
